@@ -3,6 +3,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS  # Import CORS to handle cross-origin requests
 import requests
 import os
+from dotenv import load_dotenv
+
 
 app = Flask(__name__)
 
