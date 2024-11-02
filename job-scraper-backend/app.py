@@ -1,34 +1,37 @@
 # app.py
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # Import CORS to handle cross-origin requests
 import requests
 import os
 
 app = Flask(__name__)
+
+# Enable CORS for the Netlify frontend
+CORS(app, origins=["https://topjobscraper.netlify.app"])
 
 # Endpoint to fetch jobs from Adzuna based on search query
 
 
 @app.route('/api/jobs', methods=['GET'])
 def get_jobs():
-    # Get the job title from the user input
-    role = request.args.get("role", "")
-    # Get the location from the user input
+    role = request.args.get("role", "")  # Get the job title from user input
+    # Get the location from user input
     location = request.args.get("location", "")
 
     api_url = "https://api.adzuna.com/v1/api/jobs/gb/search/1"
     params = {
-        # Adzuna App ID from environment variable
+        # Retrieve Adzuna App ID from environment variable
         "app_id": os.getenv("f3cbbc43"),
-        # Adzuna API Key from environment variable
+        # Retrieve Adzuna API Key from environment variable
         "app_key": os.getenv("23c80a1ecdb081286a841d1c78149223"),
-        "what": role,  # Use user-provided role
-        "where": location,  # Use user-provided location
+        "what": role,
+        "where": location,
         "results_per_page": 10
     }
 
     try:
         response = requests.get(api_url, params=params)
-        response.raise_for_status()  # Raise an error for bad responses
+        response.raise_for_status()  # Raise an error for non-2xx responses
 
         # Extract and format job results from Adzuna API response
         jobs = response.json().get("results", [])
