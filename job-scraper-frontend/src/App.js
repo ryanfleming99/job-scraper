@@ -7,38 +7,20 @@ function App() {
   const [jobs, setJobs] = useState([]);
 
   const handleSearch = async (role, location) => {
-    console.log("handleSearch called with:", { role, location });
-
-    // Use the environment variable for the API base URL
-    const apiUrl = `${process.env.REACT_APP_API_BASE_URL}/api/jobs?role=${role}&location=${location}`;
-
     try {
-      const response = await fetch(apiUrl);
+      console.log("Fetching and storing jobs for:", { role, location }); // Debugging line
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Data fetched:", data);
-      setJobs(data);
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
-    }
-  };
-
-  const handleSearch = async (role, location) => {
-    try {
-      // Trigger backend to fetch and store jobs
+      // Step 1: Fetch jobs from Adzuna and store in MongoDB
       await fetch(
         `${process.env.REACT_APP_API_BASE_URL}/api/fetch-jobs?role=${role}&location=${location}`
       );
 
-      // Fetch the stored jobs from the database
+      // Step 2: Retrieve stored jobs from MongoDB
       const response = await fetch(
         `${process.env.REACT_APP_API_BASE_URL}/api/jobs?role=${role}&location=${location}`
       );
       const data = await response.json();
+      console.log("Jobs data retrieved:", data); // Debugging line
       setJobs(data);
     } catch (error) {
       console.error("Error fetching jobs:", error);

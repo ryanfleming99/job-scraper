@@ -3,23 +3,20 @@ import React from "react";
 
 function Results({ jobs }) {
   return (
-    <div className="w-full max-w-md mt-6">
+    <div className="mt-6 w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       {jobs.length > 0 ? (
         jobs.map((job, index) => (
-          <div key={index} className="p-4 border border-gray-300 rounded mb-4">
-            <h2 className="text-xl font-semibold">{job.title}</h2>
-            <a
-              href={job.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500"
-            >
-              View Job
-            </a>
+          <div key={index} className="bg-white p-4 rounded shadow-md">
+            <h3 className="text-lg font-semibold">{job.title}</h3>
+            <p className="text-gray-500">{job.location}</p>
+            <p className="text-gray-400">{job.salary || "Not specified"}</p>
+            <p className="text-gray-400">
+              {new Date(job.post_date).toLocaleDateString()}
+            </p>
           </div>
         ))
       ) : (
-        <p>No jobs found. Try a different search.</p>
+        <p>No job results found.</p>
       )}
     </div>
   );
