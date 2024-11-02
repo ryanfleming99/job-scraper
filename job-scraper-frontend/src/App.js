@@ -27,6 +27,24 @@ function App() {
     }
   };
 
+  const handleSearch = async (role, location) => {
+    try {
+      // Trigger backend to fetch and store jobs
+      await fetch(
+        `${process.env.REACT_APP_API_BASE_URL}/api/fetch-jobs?role=${role}&location=${location}`
+      );
+
+      // Fetch the stored jobs from the database
+      const response = await fetch(
+        `${process.env.REACT_APP_API_BASE_URL}/api/jobs?role=${role}&location=${location}`
+      );
+      const data = await response.json();
+      setJobs(data);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center p-4">
       <h1 className="text-3xl font-bold mb-6">Job Search</h1>
