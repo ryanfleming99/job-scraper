@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import Search from "./components/Search";
 import Results from "./components/Results";
+import "./index.css"; // or './App.css' if that’s where your Tailwind styles are
 
 function App() {
   const [jobs, setJobs] = useState([]);
