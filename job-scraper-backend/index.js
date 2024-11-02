@@ -1,31 +1,35 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const axios = require("axios");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const axios = require("axios");
-const mongoose = require("mongoose");
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI || "your_mongodb_uri_here", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
-const Job = mongoose.model(
-  "Job",
-  new mongoose.Schema({
-    title: String,
-    location: String,
-    salary: String,
-    post_date: String,
-    description: String,
-    link: String
-  })
-);
+// Job schema and model
+const jobSchema = new mongoose.Schema({
+  title: String,
+  location: String,
+  salary: String,
+  post_date: String,
+  description: String,
+  link: String
+});
+const Job = mongoose.model("Job", jobSchema);
 
+// Function to fetch jobs from Adzuna API and store them in MongoDB
 const fetchAndStoreJobs = async (role, location) => {
   const apiUrl = `https://api.adzuna.com/v1/api/jobs/gb/search/1`;
   const params = {
-    app_id: "yf3cbbc43", // Replace with your Adzuna app ID
-    app_key: "23c80a1ecdb081286a841d1c78149223", // Replace with your Adzuna API key
+    app_id: process.env.ADZUNA_APP_ID || "ADZUNA_APP_ID", // Store in .env for security
+    app_key: process.env.ADZUNA_API_KEY || "ADZUNA_API_KEY", // Store in .env for security
     what: role,
     where: location,
     results_per_page: 10
@@ -35,7 +39,6 @@ const fetchAndStoreJobs = async (role, location) => {
     const response = await axios.get(apiUrl, { params });
     const jobs = response.data.results;
 
-    // Save each job to MongoDB
     for (let job of jobs) {
       const jobData = {
         title: job.title,
@@ -48,7 +51,7 @@ const fetchAndStoreJobs = async (role, location) => {
         link: job.redirect_url
       };
 
-      // Upsert (update if exists, otherwise insert)
+      // Upsert job data into MongoDB
       await Job.updateOne(
         { link: jobData.link },
         { $set: jobData },
@@ -60,22 +63,18 @@ const fetchAndStoreJobs = async (role, location) => {
   }
 };
 
-// Connect to MongoDB
-mongoose.connect(
-  "mongodb+srv://ryanfleming:sUN9uV2iIcjtxiP9@cluster0.mongodb.net/jobDB?retryWrites=true&w=majority",
-  { useNewUrlParser: true, useUnifiedTopology: true }
-);
-
-const jobSchema = new mongoose.Schema({
-  title: String,
-  location: String,
-  link: String,
-  description: String
+// API route to trigger fetching and storing jobs
+app.get("/api/fetch-jobs", async (req, res) => {
+  const { role, location } = req.query;
+  try {
+    await fetchAndStoreJobs(role, location);
+    res.status(200).json({ message: "Jobs fetched and stored successfully!" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch jobs from Adzuna" });
+  }
 });
 
-const Job = mongoose.model("Job", jobSchema);
-
-// API route to fetch jobs
+// API route to retrieve jobs from MongoDB
 app.get("/api/jobs", async (req, res) => {
   try {
     const jobs = await Job.find();
@@ -83,14 +82,6 @@ app.get("/api/jobs", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch jobs" });
   }
-});
-
-// API route to add jobs (for scraping or manual addition)
-app.post("/api/jobs", async (req, res) => {
-  const { title, location, link, description } = req.body;
-  const job = new Job({ title, location, link, description });
-  await job.save();
-  res.status(201).json(job);
 });
 
 const PORT = process.env.PORT || 5000;

@@ -21,9 +21,9 @@ def get_jobs():
     api_url = "https://api.adzuna.com/v1/api/jobs/gb/search/1"
     params = {
         # Retrieve Adzuna App ID from environment variable
-        "app_id": os.getenv("f3cbbc43"),
+        "app_id": os.getenv("ADZUNA_APP_ID"),
         # Retrieve Adzuna API Key from environment variable
-        "app_key": os.getenv("23c80a1ecdb081286a841d1c78149223"),
+        "app_key": os.getenv("ADZUNA_API_KEY"),
         "what": role,
         "where": location,
         "results_per_page": 10
