@@ -1,41 +1,44 @@
 # app.py
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # Import CORS to handle cross-origin requests
+from flask_cors import CORS
 import requests
 import os
 from dotenv import load_dotenv
+import logging
 
+load_dotenv()  # Load environment variables from .env if available
 
 app = Flask(__name__)
-
-# Enable CORS for the Netlify frontend
 CORS(app, origins=["https://topjobscraper.netlify.app"])
-
-# Endpoint to fetch jobs from Adzuna based on search query
+logging.basicConfig(level=logging.INFO)
 
 
 @app.route('/api/jobs', methods=['GET'])
 def get_jobs():
-    role = request.args.get("role", "")  # Get the job title from user input
-    # Get the location from user input
+    role = request.args.get("role", "")
     location = request.args.get("location", "")
+
+    # Ensure API credentials are loaded
+    app_id = os.getenv("ADZUNA_APP_ID")
+    api_key = os.getenv("ADZUNA_API_KEY")
+    if not app_id or not api_key:
+        logging.error("Adzuna API credentials are missing.")
+        return jsonify({"error": "Server configuration error."}), 500
 
     api_url = "https://api.adzuna.com/v1/api/jobs/gb/search/1"
     params = {
-        # Retrieve Adzuna App ID from environment variable
-        "app_id": os.getenv("ADZUNA_APP_ID"),
-        # Retrieve Adzuna API Key from environment variable
-        "app_key": os.getenv("ADZUNA_API_KEY"),
+        "app_id": app_id,
+        "app_key": api_key,
         "what": role,
         "where": location,
         "results_per_page": 10
     }
 
     try:
+        logging.info("Sending request to Adzuna with params: %s", params)
         response = requests.get(api_url, params=params)
-        response.raise_for_status()  # Raise an error for non-2xx responses
+        response.raise_for_status()  # Raises an HTTPError if status is 4xx, 5xx
 
-        # Extract and format job results from Adzuna API response
         jobs = response.json().get("results", [])
         job_data = [
             {
@@ -49,9 +52,10 @@ def get_jobs():
             for job in jobs
         ]
 
-        return jsonify(job_data)  # Return the job data as JSON
+        return jsonify(job_data)
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+        logging.error("Error fetching jobs from Adzuna: %s", e)
+        return jsonify({"error": "Failed to fetch jobs from Adzuna API"}), 500
 
 
 if __name__ == '__main__':
